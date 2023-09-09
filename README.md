@@ -14,7 +14,6 @@ CP/M-80 Ver3.0も移植されておられます。<br>
 今回公開するのは、@hanyazouさんのCP/M-80 Ver2.2をZ8S180-57Qへ移植したものです。<br>
 ソースのコンパイルは、マイクロチップ社の「MPLAB® X Integrated Development Environment (IDE)」<br>
 で行っております。（MPLAB X IDE v6.10）コンパイラは、XC8を使用しています。<br>
-<br>
 https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide<br>
 <br>
 Z80のアセンブラは、Macro Assembler AS V1.42を使用しています。<br>
@@ -32,7 +31,6 @@ http://star.gmobb.jp/koji/cgi/wiki.cgi?page=CpmtoolsGUI<br>
 また、IPL, BOOT, BIOS等の修正で、毎回イメージファイルを作るのは面倒なので、<br>
 バイナリーエディタ「xedit」を利用しています。ファイルをバイナリレベルで修正<br>
 出来るので便利です。<br>
-<br>
 https://janus.blog.ss-blog.jp/2016-06-17<br>
 <br>
 （オリジナルのリンクが切れているようです）<br>
