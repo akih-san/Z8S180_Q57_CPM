@@ -1,0 +1,341 @@
+ AS V1.42 Beta [Bld 227] - Source File ipl.z80 - Page 1 - 9/7/2023 10:1:34
+
+
+       1/       0 :                     	page	0
+       2/       0 :                     	cpu	Z180
+       3/       0 :                     
+       4/       0 :                     ;	CP/M 2.2 boot-loader for Z80-Simulator
+       5/       0 :                     ;
+       6/       0 :                     ;	Copyright (C) 1988-2007 by Udo Munk
+       7/       0 :                     ;
+       8/       0 :                     ;Permission is hereby granted, free of charge, to any person
+       9/       0 :                     ;obtaining a copy of this software and associated documentation
+      10/       0 :                     ;files (the "Software"), to deal in the Software without
+      11/       0 :                     ;restriction, including without limitation the rights to use,
+      12/       0 :                     ;copy, modify, merge, publish, distribute, sublicense, and/or sell
+      13/       0 :                     ;copies of the Software, and to permit persons to whom the
+      14/       0 :                     ;Software is furnished to do so, subject to the following
+      15/       0 :                     ;conditions:
+      16/       0 :                     ;
+      17/       0 :                     ;The above copyright notice and this permission notice shall be
+      18/       0 :                     ;included in all copies or substantial portions of the Software.
+      19/       0 :                     ;
+      20/       0 :                     ;THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      21/       0 :                     ;EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+      22/       0 :                     ;OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      23/       0 :                     ;NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      24/       0 :                     ;HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      25/       0 :                     ;WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+      26/       0 :                     ;FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+      27/       0 :                     ;OTHER DEALINGS IN THE SOFTWARE.
+      28/       0 :                     ;
+      29/       0 :                     	ORG	0		;mem base of boot
+      30/       0 :                     
+      31/       0 : =1H                  UART_180	equ	1	; use Z8S180 serial
+      32/       0 : =0H                  UART_PIC	equ	0	; use PIC serial (CPU clock 16MHz limit)
+      33/       0 : =0H                  BYTE_RW 	equ	0	; use I/O byte read/write
+      34/       0 :                     ;
+      35/       0 :                     ;	I/O ports
+      36/       0 :                     ;
+      37/       0 : =>FALSE              	if	UART_PIC
+      38/       0 :                     CONDAT	EQU	41h		;console data port
+      39/       0 : [37]                 	endif
+      40/       0 :                     
+      41/       0 : =48H                 FDCDAT	EQU	48H		;fdc-port: data (non-DMA)
+      42/       0 : =4AH                 DRIVE   EQU	4ah		;fdc-port: # of drive
+      43/       0 : =4BH                 TRACK   EQU	4bh		;fdc-port: # of track
+      44/       0 : =4CH                 SECTOR  EQU	4ch		;fdc-port: # of sector
+      45/       0 : =4DH                 FDCOP   EQU	4dh		;fdc-port: command
+      46/       0 : =4EH                 FDCST   EQU	4eh		;fdc-port: status
+      47/       0 : =4FH                 DMAL    EQU	4fh		;dma-port: dma address low
+      48/       0 : =50H                 DMAH    EQU	50h		;dma-port: dma address high
+      49/       0 :                     
+      50/       0 : =0H                  D_DMA_READ	equ	0
+      51/       0 : =1H                  D_DMA_WRITE	equ	1
+      52/       0 : =2H                  D_READ		equ	2
+      53/       0 : =3H                  D_WRITE		equ	3
+      54/       0 : =0H                  D_SUCCESS	equ	0
+      55/       0 : =1H                  D_ERROR		equ	1
+      56/       0 :                     
+      57/       0 :                     
+      58/       0 : =>TRUE               	if	UART_180
+      59/       0 : =0H                  IOBASE		EQU	00h
+      60/       0 : =8H                  UART_RX		EQU	IOBASE+08h	; UART DATA REGISTOR
+      61/       0 : =6H                  UART_TX		EQU	IOBASE+06h
+      62/       0 : =4H                  UARTCR_180	EQU	IOBASE+04h	; UART CONTROL REGISTOR
+      63/       0 : =0E0H                OMCR_V		EQU	0E0H
+      64/       0 :                     
+      65/       0 : =0H                  CLOCK_0		equ	0	; CPU clock = 0.5 x external clock
+      66/       0 : =1H                  CLOCK_1		equ	1	; CPU clock = 1.0 x external clock
+      67/       0 : =0H                  CLOCK_2		equ	0	; CPU clock = 2.0 x external clock
+      68/       0 : [58]                 	endif
+      69/       0 :                     ;
+      70/       0 :                     BOOT:
+      71/       0 : C3 BB 00            	JP	COLD
+      72/       3 : 00 00 00 00 00 00           DB	128 - 3 dup(0)
+                9 : 00 00 00 00 00 00 
+                F : 00 00 00 00 00 00 
+               15 : 00 00 00 00 00 00 
+               1B : 00 00 00 00 00 00 
+               21 : 00 00 00 00 00 00 
+               27 : 00 00 00 00 00 00 
+               2D : 00 00 00 00 00 00 
+               33 : 00 00 00 00 00 00 
+               39 : 00 00 00 00 00 00 
+               3F : 00 00 00 00 00 00 
+               45 : 00 00 00 00 00 00 
+               4B : 00 00 00 00 00 00 
+               51 : 00 00 00 00 00 00 
+               57 : 00 00 00 00 00 00 
+               5D : 00 00 00 00 00 00 
+               63 : 00 00 00 00 00 00 
+               69 : 00 00 00 00 00 00 
+               6F : 00 00 00 00 00 00 
+               75 : 00 00 00 00 00 00 
+               7B : 00 00 00 00 00    
+      73/      80 :                     ;
+      74/      80 : 42 4F 4F 54 3A 20   ERRMSG:	DB	"BOOT: error booting"
+               86 : 65 72 72 6F 72 20 
+               8C : 62 6F 6F 74 69 6E 
+               92 : 67                
+      75/      93 : 0D 0A 00            	DB	13,10,0
+      76/      96 : 43 50 2F 4D 20 62   HLOMSG:	DB	"CP/M boot-loader for Z80-Simulator"
+               9C : 6F 6F 74 2D 6C 6F 
+               A2 : 61 64 65 72 20 66 
+               A8 : 6F 72 20 5A 38 30 
+               AE : 2D 53 69 6D 75 6C 
+               B4 : 61 74 6F 72       
+      77/      B8 : 0D 0A 00            CRLF:	DB	13,10,0
+      78/      BB :                     ;
+      79/      BB :                     ;	begin the load operation
+      80/      BB :                     ;
+      81/      BB :                     COLD:
+      82/      BB : F3                  	DI
+      83/      BC : 31 70 01            	LD	SP,st_p
+      84/      BF :                     
+      85/      BF : =>TRUE               	if	UART_180
+      86/      BF :                     	; check Z80 or Z80180
+      87/      BF : 01 FF 00            	LD	BC,00FFH
+      88/      C2 : ED 4C               	DB	0EDH,4CH	; MLT BC (HD64180)
+      89/      C4 : 78                  	LD	A,B
+      90/      C5 : B1                  	OR	C
+      91/      C6 : 20 3F               	JR	NZ,ID_Z80
+      92/      C8 :                     
+      93/      C8 :                     ; HD64180R/Z or Z8S180
+      94/      C8 :                     
+      95/      C8 : 3E 00               	LD	A,IOBASE
+      96/      CA : ED 39 3F            	OUT0	(3Fh),A
+      97/      CD : 3E 00               	LD	A,00H		; 0 Wait
+      98/      CF : ED 39 32            	OUT0	(IOBASE+32H),A	; DMA/WAIT Control Register (DCNTL)
+      99/      D2 : 3E 00               	LD	A,00H		; no refresh
+     100/      D4 : ED 39 36            	OUT0	(IOBASE+36H),A	; Refresh Control Register (RCR)
+     101/      D7 :                     
+     102/      D7 :                     ;check HD64180R or HD64180Z
+     103/      D7 :                     
+     104/      D7 : 3E 7F               	LD	A,7FH		; Try to change OMCR bit 7 to 0
+     105/      D9 : ED 39 3E            	OUT0	(IOBASE+3EH),A
+     106/      DC : ED 38 3E            	IN0	A,(IOBASE+3EH)
+     107/      DF : E6 80               	AND	80H
+     108/      E1 : 20 1A               	JR	NZ, ID_180R	; HD64180R
+     109/      E3 :                     
+     110/      E3 :                     ;check HD64180Z(Z80180) or Z8S180
+     111/      E3 :                     
+     112/      E3 : 3E E0               	LD	A,OMCR_V
+     113/      E5 : ED 39 3E            	OUT0	(IOBASE+3EH),A	; Restore OMCR
+     114/      E8 :                     
+     115/      E8 : AF                  	XOR	A
+     116/      E9 : ED 39 12            	OUT0	(IOBASE+12H),A
+     117/      EC : ED 38 12            	IN0	A,(IOBASE+12H)
+     118/      EF : E6 40               	AND	40H
+     119/      F1 : 20 0A               	JR	NZ,ID_180Z
+     120/      F3 :                     
+     121/      F3 :                     ; Z8S180
+     122/      F3 :                     
+     123/      F3 :                     ;; CPU clock = 2.0 x external clock
+     124/      F3 : =>FALSE              	IF	CLOCK_2
+     125/      F3 :                     	LD	A,80H		; Clock Divide XTAL/1 Bit 7=1
+     126/      F3 :                     	OUT0	(IOBASE+1FH),A	; CPU Control Register (CCR)
+     127/      F3 :                     	LD	A,0FFH		; X2 Clock Multiplier Mode : Enable Bit 7=1
+     128/      F3 :                     	OUT0	(IOBASE+1EH),A	; Clock Multiplier Register (CMR)
+     129/      F3 : [124]                	ENDIF
+     130/      F3 :                     
+     131/      F3 :                     ;; CPU clock = 1.0 x external clock
+     132/      F3 : =>TRUE               	IF	CLOCK_1
+     133/      F3 : 3E 80               	LD	A,80H		; Clock Divide XTAL/1 Bit 7=1
+     134/      F5 : ED 39 1F            	OUT0	(IOBASE+1FH),A	; CPU Control Register (CCR)
+     135/      F8 : 3E 7F               	LD	A,07FH		; X2 Clock Multiplier Mode : Enable Bit 7=1
+     136/      FA : ED 39 1E            	OUT0	(IOBASE+1EH),A	; Clock Multiplier Register (CMR)
+     137/      FD : [132]                	ENDIF
+     138/      FD :                     
+     139/      FD :                     ;; CPU clock = 0.5 x external clock
+     140/      FD : =>FALSE              	IF	CLOCK_0
+     141/      FD :                     	LD	A,00H		; Clock Divide XTAL/1 Bit 7=1
+     142/      FD :                     	OUT0	(IOBASE+1FH),A	; CPU Control Register (CCR)
+     143/      FD :                     	LD	A,07FH		; X2 Clock Multiplier Mode : Enable Bit 7=1
+     144/      FD :                     	OUT0	(IOBASE+1EH),A	; Clock Multiplier Register (CMR)
+     145/      FD : [140]                	ENDIF
+     146/      FD :                     
+     147/      FD :                     	;; HD64180Z and HD64180R
+     148/      FD :                     ID_180R:
+     149/      FD :                     ID_180Z:
+     150/      FD : 3E 64               	LD	A,64h		; 8bit, no parity, 1 stop bit
+     151/      FF : ED 39 00            	OUT0	(IOBASE+00h),A	; ASCI control register A ch0
+     152/     102 : 3E 07               	LD	A,07h		; x16, external serial clock
+     153/     104 : ED 39 02            	OUT0	(IOBASE+02h),A	; ASCI control register B ch0
+     154/     107 : [85]                 	endif
+     155/     107 :                     
+     156/     107 :                     ID_Z80:
+     157/     107 : 21 96 00            	LD	HL,HLOMSG
+     158/     10A : CD 3E 01            	call	STROUT
+     159/     10D :                     
+     160/     10D :                     ; load boot
+     161/     10D : 01 01 00            	LD	BC,1		;b=track 0, c=sector 1
+     162/     110 : 21 00 00            	LD	HL,BOOT		;base transfer address
+     163/     113 : AF                  	XOR	A		;select drive A
+     164/     114 : D3 4A               	OUT	(DRIVE),A
+     165/     116 : 78                  	LD	A,B		;set track
+     166/     117 : D3 4B               	OUT	(TRACK),A
+     167/     119 : 79                  	LD	A,C		;set sector
+     168/     11A : D3 4C               	OUT	(SECTOR),A
+     169/     11C :                     
+     170/     11C : =>FALSE              	if BYTE_RW
+     171/     11C :                     
+     172/     11C :                     	LD	A,D_READ	;read sector (non-DMA)
+     173/     11C :                     	OUT	(FDCOP),A
+     174/     11C :                     	IN	A,(FDCST)	;get status of fdc
+     175/     11C :                     	OR	A		;read successful ?
+     176/     11C :                     	JP	NZ,ERR_STOP
+     177/     11C :                     	LD	E,128		;128 bytes per sector
+     178/     11C :                     LBYTE:
+     179/     11C :                     	IN	A,(FDCDAT)
+     180/     11C :                     	LD	(HL),A
+     181/     11C :                     	INC	HL
+     182/     11C :                     	DEC	E
+     183/     11C :                     	JP	NZ,LBYTE
+     184/     11C :                     	JP	BOOT		;goto BOOT
+     185/     11C :                     
+     186/     11C : =>TRUE               	else
+     187/     11C :                     
+     188/     11C : 7D                  	LD	A,L		;set dma address low
+     189/     11D : D3 4F               	OUT	(DMAL),A
+     190/     11F : 7C                  	LD	A,H		;set dma address high
+     191/     120 : D3 50               	OUT	(DMAH),A
+     192/     122 : 3E 00               	LD	A,D_DMA_READ	;read sector (DMA)
+     193/     124 : D3 4D               	OUT	(FDCOP),A
+     194/     126 : DB 4E               	IN	A,(FDCST)	;get status of fdc
+     195/     128 : B7                  	OR	A		;read successful ?
+     196/     129 : CA 00 00            	JP	Z,BOOT	
+     197/     12C :                     
+     198/     12C : [170]                	endif
+     199/     12C :                     ;
+     200/     12C :                     ERR_STOP:
+     201/     12C : C6 30               	ADD	A,'0'		;print error status
+     202/     12E : CD 50 01            	call	CONOUT
+     203/     131 : 21 B8 00            	ld	hl, CRLF
+     204/     134 : CD 3E 01            	call	STROUT
+     205/     137 : 21 80 00            	LD	HL,ERRMSG	;print error message
+     206/     13A : CD 3E 01            	call	STROUT
+     207/     13D : 76                  	HALT			;and halt cpu
+     208/     13E :                     ;
+     209/     13E :                     ;;
+     210/     13E : =>FALSE              	if	UART_PIC
+     211/     13E :                     STROUT:
+     212/     13E :                     	LD	A,(HL)
+     213/     13E :                     	OUT	(CONDAT),A
+     214/     13E :                     	INC	HL
+     215/     13E :                     	OR	A
+     216/     13E :                     	JP	NZ,STROUT
+     217/     13E :                     	RET
+     218/     13E :                     
+     219/     13E :                     CONOUT:
+     220/     13E :                     	OUT	(CONDAT),A
+     221/     13E :                     	ret
+     222/     13E : [210]                	endif
+     223/     13E :                     
+     224/     13E : =>TRUE               	if UART_180
+     225/     13E :                     STROUT:
+     226/     13E : 7E                  	ld	a,(hl)
+     227/     13F : B7                  	or	a
+     228/     140 : C8                  	ret	z
+     229/     141 : 5F                  	ld	e, a
+     230/     142 :                     ST1:
+     231/     142 : ED 38 04            	IN0	A,(UARTCR_180)
+     232/     145 : CB 4F               	BIT	1,A
+     233/     147 : 28 F9               	JR	Z,ST1
+     234/     149 : 7B                  	ld	a, e
+     235/     14A : ED 39 06            	OUT0	(UART_TX),A
+     236/     14D : 23                  	inc	hl
+     237/     14E : 18 EE               	jr	STROUT
+     238/     150 :                     ;
+     239/     150 :                     CONOUT:
+     240/     150 : 5F                  	ld	e, a
+     241/     151 :                     CT1:
+     242/     151 : ED 38 04            	IN0	A,(UARTCR_180)
+     243/     154 : CB 4F               	BIT	1,A
+     244/     156 : 28 F9               	JR	Z,CT1
+     245/     158 : 7B                  	ld	a, e
+     246/     159 : ED 39 06            	OUT0	(UART_TX),A
+     247/     15C : C9                  	ret
+     248/     15D : [224]                	endif
+     249/     15D :                     
+     250/     170 :                     	org	($+20H) & 0fff0h
+     251/     170 :                     st_p:
+     252/     170 :                     
+     253/     170 :                     	END			;of boot loader
+ AS V1.42 Beta [Bld 227] - Source File ipl.z80 - Page 2 - 9/7/2023 10:1:34
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BOOT :                           0 C |  BYTE_RW :                        0 - |
+*CASESENSITIVE :                  0 - |  CLOCK_0 :                        0 - |
+ CLOCK_1 :                        1 - |  CLOCK_2 :                        0 - |
+ COLD :                         0BB C | *COMPMODE :                       0 - |
+ CONOUT :                       150 C | *CONSTPI :        3.141592653589793 - |
+ CRLF :                         0B8 C |  CT1 :                          151 C |
+*DATE :                  "9/7/2023" - |  DMAH :                          50 - |
+ DMAL :                          4F - |  DRIVE :                         4A - |
+ D_DMA_READ :                     0 - | *D_DMA_WRITE :                    1 - |
+*D_ERROR :                        1 - | *D_READ :                         2 - |
+*D_SUCCESS :                      0 - | *D_WRITE :                        3 - |
+ ERRMSG :                        80 C | *ERR_STOP :                     12C C |
+*FALSE :                          0 - | *FDCDAT :                        48 - |
+ FDCOP :                         4D - |  FDCST :                         4E - |
+*FULLPMMU :                       1 - | *HAS64 :                          0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+ HLOMSG :                        96 C |  ID_180R :                      0FD C |
+ ID_180Z :                      0FD C |  ID_Z80 :                       107 C |
+*INSUPMODE :                      0 - |  IOBASE :                         0 - |
+*LISTON :                         1 - | *MACEXP :                         7 - |
+*MOMCPU :                       180 - | *MOMCPUNAME :                "Z180" - |
+*NESTMAX :                      100 - |  OMCR_V :                       0E0 - |
+*PADDING :                        1 - | *RELAXED :                        0 - |
+ SECTOR :                        4C - |  ST1 :                          142 C |
+ STROUT :                       13E C |  ST_P :                         170 C |
+*TIME :                   "10:1:34" - |  TRACK :                         4B - |
+*TRUE :                           1 - |  UARTCR_180 :                     4 - |
+ UART_180 :                       1 - |  UART_PIC :                       0 - |
+*UART_RX :                        8 - |  UART_TX :                        6 - |
+*VERSION :                     142F - |
+
+     60 symbols
+     29 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File ipl.z80 - Page 3 - 9/7/2023 10:1:34
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.03 seconds assembly time
+
+    254 lines source file
+      2 passes
+      0 errors
+      0 warnings

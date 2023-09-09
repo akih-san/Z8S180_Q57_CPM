@@ -1,0 +1,217 @@
+ AS V1.42 Beta [Bld 227] - Source File boot2.asm - Page 1 - 9/7/2023 10:48:23
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu Z180
+       3/       0 :                     ;	CP/M 2.2 boot-loader for Z80-Simulator
+       4/       0 :                     ;
+       5/       0 :                     ;	Copyright (C) 1988-2007 by Udo Munk
+       6/       0 :                     ;
+       7/       0 :                     	ORG	0		;mem base of boot
+       8/       0 :                     ;
+       9/       0 : =40H                 MSIZE	EQU	64		;mem size in kbytes
+      10/       0 :                     ;
+      11/       0 : =0B000H              BIAS	EQU	(MSIZE-20)*1024	;offset from 20k system
+      12/       0 : =0E400H              CCP	EQU	3400H+BIAS	;base of the ccp
+      13/       0 : =0FA00H              BIOS	EQU	CCP+1600H	;base of the bios
+      14/       0 : =300H                BIOSL	EQU	0300H		;length of the bios
+      15/       0 : =0FA00H              BOOT	EQU	BIOS
+      16/       0 : =1900H               SIZE	EQU	BIOS+BIOSL-CCP	;size of cp/m system
+      17/       0 : =32H                 SECTS	EQU	SIZE/128	;# of sectors to load
+      18/       0 :                     ;
+      19/       0 :                     ;	I/O ports
+      20/       0 :                     ;
+      21/       0 : =1H                  UART_180	equ	1	; use Z8S180 serial
+      22/       0 : =0H                  UART_PIC	equ	0	; use PIC serial (CPU clock 16MHz limit)
+      23/       0 : =0H                  BYTE_RW 	equ	0	; use I/O byte read/write
+      24/       0 :                     
+      25/       0 : =>TRUE               	if	UART_180
+      26/       0 : =0H                  IOBASE		EQU	00h
+      27/       0 : =8H                  UART_RX		EQU	IOBASE+08h	; UART DATA REGISTOR
+      28/       0 : =6H                  UART_TX		EQU	IOBASE+06h
+      29/       0 : =4H                  UARTCR_180	EQU	IOBASE+04h	; UART CONTROL REGISTOR
+      30/       0 : [25]                 	endif
+      31/       0 :                     
+      32/       0 : =>FALSE              	if	UART_PIC
+      33/       0 :                     CONDAT	EQU	41h		;console data port
+      34/       0 : [32]                 	endif
+      35/       0 :                     
+      36/       0 : =48H                 FDCDAT	EQU	48h		;fdc-port: data (non-DMA)
+      37/       0 : =4AH                 DRIVE   EQU	4ah		;fdc-port: # of drive
+      38/       0 : =4BH                 TRACK   EQU	4bh		;fdc-port: # of track
+      39/       0 : =4CH                 SECTOR  EQU	4ch		;fdc-port: # of sector
+      40/       0 : =4DH                 FDCOP   EQU	4dh		;fdc-port: command
+      41/       0 : =4EH                 FDCST   EQU	4eh		;fdc-port: status
+      42/       0 : =4FH                 DMAL    EQU	4fh		;dma-port: dma address low
+      43/       0 : =50H                 DMAH    EQU	50h		;dma-port: dma address high
+      44/       0 :                     ;
+      45/       0 : =0H                  D_DMA_READ	equ	0
+      46/       0 : =1H                  D_DMA_WRITE	equ	1
+      47/       0 : =2H                  D_READ		equ	2
+      48/       0 : =3H                  D_WRITE		equ	3
+      49/       0 : =0H                  D_SUCCESS	equ	0
+      50/       0 : =1H                  D_ERROR		equ	1
+      51/       0 :                     
+      52/       0 : C3 19 00            	JP	COLD
+      53/       3 :                     ;
+      54/       3 : 42 4F 4F 54 3A 20   ERRMSG:	DB	"BOOT: error booting"
+                9 : 65 72 72 6F 72 20 
+                F : 62 6F 6F 74 69 6E 
+               15 : 67                
+      55/      16 : 0D 0A 00            	DB	13,10,0
+      56/      19 :                     ;
+      57/      19 :                     ;	begin the load operation
+      58/      19 :                     ;
+      59/      19 : 01 02 00            COLD:	LD	BC,2		;b=track 0, c=sector 2
+      60/      1C : 16 32               	LD	D,SECTS		;d=# sectors to load
+      61/      1E : 21 00 E4            	LD	HL,CCP		;base transfer address
+      62/      21 : AF                  	XOR	A		;select drive A
+      63/      22 : D3 4A               	OUT	(DRIVE),A
+      64/      24 :                     ;
+      65/      24 :                     ;	load the next sector
+      66/      24 :                     ;
+      67/      24 : 78                  LSECT:	LD	A,B		;set track
+      68/      25 : D3 4B               	OUT	(TRACK),A
+      69/      27 : 79                  	LD	A,C		;set sector
+      70/      28 : D3 4C               	OUT	(SECTOR),A
+      71/      2A : 1E 80               	LD	E,128		;128 bytes per sector
+      72/      2C :                     
+      73/      2C : =>FALSE              	if BYTE_RW
+      74/      2C :                     
+      75/      2C :                     	LD	A,D_READ	;read sector (non-DMA)
+      76/      2C :                     	OUT	(FDCOP),A
+      77/      2C :                     	IN	A,(FDCST)	;get status of fdc
+      78/      2C :                     	OR	A		;read successful ?
+      79/      2C :                     	JP	NZ,RD_ERR	;jump, if error
+      80/      2C :                     ;
+      81/      2C :                     ;	read data to the destination address
+      82/      2C :                     ;
+      83/      2C :                     LBYTE:
+      84/      2C :                     	IN	A,(FDCDAT)
+      85/      2C :                     	LD	(HL),A
+      86/      2C :                     	INC	HL
+      87/      2C :                     	DEC	E
+      88/      2C :                     	JP	NZ,LBYTE
+      89/      2C :                     				;go to next sector if load is incomplete
+      90/      2C : =>TRUE               	else
+      91/      2C :                     
+      92/      2C : 7C                  	LD	A,H
+      93/      2D : D3 50               	OUT	(DMAH),A
+      94/      2F : 7D                  	LD	A,L
+      95/      30 : D3 4F               	OUT	(DMAL),A
+      96/      32 : 3E 00               	LD	A,D_DMA_READ	;read sector (DMA)
+      97/      34 : D3 4D               	OUT	(FDCOP),A
+      98/      36 : DB 4E               	IN	A,(FDCST)	;get status of fdc
+      99/      38 : B7                  	OR	A		;read successful ?
+     100/      39 : C2 52 00            	JP	NZ,RD_ERR	;jump, if error
+     101/      3C :                     
+     102/      3C :                     	; calc next DMA address
+     103/      3C : 7A                  	LD	A,D		; save sectors
+     104/      3D : 16 00               	LD	D,0
+     105/      3F : 19                  	ADD	HL,DE		; HL=HL+128
+     106/      40 : 57                  	LD	D,A		; restore sectors
+     107/      41 : [73]                 	endif
+     108/      41 :                     
+     109/      41 : 15                  	DEC	D		;sects=sects-1
+     110/      42 : CA 00 FA            	JP	Z,BOOT		;head for the bios
+     111/      45 :                     ;
+     112/      45 :                     ;	more sectors to load
+     113/      45 :                     ;
+     114/      45 : 0C                  	INC	C		;sector = sector + 1
+     115/      46 : 79                  	LD	A,C
+     116/      47 : FE 1B               	CP	27		;last sector of track ?
+     117/      49 : DA 24 00            	JP	C,LSECT		;no, go read another
+     118/      4C :                     ;
+     119/      4C :                     ;	end of track, increment to next track
+     120/      4C :                     ;
+     121/      4C : 0E 01               	LD	C,1		;sector = 1
+     122/      4E : 04                  	INC	B		;track = track + 1
+     123/      4F : C3 24 00            	JP	LSECT		;for another group
+     124/      52 :                     ;
+     125/      52 :                     RD_ERR:
+     126/      52 : 21 03 00            	LD	HL,ERRMSG	;no, print error
+     127/      55 :                     
+     128/      55 : =>TRUE               	if UART_180
+     129/      55 :                     STROUT:
+     130/      55 : 7E                  	ld	a,(hl)
+     131/      56 : B7                  	or	a
+     132/      57 : CA 6B 00            	jp	z,STOP
+     133/      5A : 5F                  	ld	e, a
+     134/      5B :                     ST1:
+     135/      5B : ED 38 04            	IN0	A,(UARTCR_180)
+     136/      5E : CB 4F               	BIT	1,A
+     137/      60 : CA 5B 00            	JP	Z,ST1
+     138/      63 : 7B                  	ld	a, e
+     139/      64 : ED 39 06            	OUT0	(UART_TX),A
+     140/      67 : 23                  	inc	hl
+     141/      68 : C3 55 00            	JP	STROUT
+     142/      6B : [128]                	endif
+     143/      6B :                     
+     144/      6B : =>FALSE              	if	UART_PIC
+     145/      6B :                     STROUT:	LD	A,(HL)
+     146/      6B :                     	OR	A
+     147/      6B :                     	JP	Z,STOP
+     148/      6B :                     	OUT	(CONDAT),A
+     149/      6B :                     	INC	HL
+     150/      6B :                     	JP	STROUT
+     151/      6B : [144]                	endif
+     152/      6B :                     
+     153/      6B : F3                  STOP:	DI
+     154/      6C : 76                  	HALT			;and halt cpu
+     155/      6D :                     
+     156/      6D :                     	END			;of boot loader
+ AS V1.42 Beta [Bld 227] - Source File boot2.asm - Page 2 - 9/7/2023 10:48:23
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BIAS :                       0B000 - |  BIOS :                       0FA00 - |
+ BIOSL :                        300 - |  BOOT :                       0FA00 - |
+ BYTE_RW :                        0 - | *CASESENSITIVE :                  0 - |
+ CCP :                        0E400 - |  COLD :                          19 C |
+*COMPMODE :                       0 - | *CONSTPI :        3.141592653589793 - |
+*DATE :                  "9/7/2023" - |  DMAH :                          50 - |
+ DMAL :                          4F - |  DRIVE :                         4A - |
+ D_DMA_READ :                     0 - | *D_DMA_WRITE :                    1 - |
+*D_ERROR :                        1 - | *D_READ :                         2 - |
+*D_SUCCESS :                      0 - | *D_WRITE :                        3 - |
+ ERRMSG :                         3 C | *FALSE :                          0 - |
+*FDCDAT :                        48 - |  FDCOP :                         4D - |
+ FDCST :                         4E - | *FULLPMMU :                       1 - |
+*HAS64 :                          0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - | *INSUPMODE :                      0 - |
+ IOBASE :                         0 - | *LISTON :                         1 - |
+ LSECT :                         24 C | *MACEXP :                         7 - |
+*MOMCPU :                       180 - | *MOMCPUNAME :                "Z180" - |
+ MSIZE :                         40 - | *NESTMAX :                      100 - |
+*PADDING :                        1 - |  RD_ERR :                        52 C |
+*RELAXED :                        0 - |  SECTOR :                        4C - |
+ SECTS :                         32 - |  SIZE :                        1900 - |
+ ST1 :                           5B C |  STOP :                          6B C |
+ STROUT :                        55 C | *TIME :                  "10:48:23" - |
+ TRACK :                         4B - | *TRUE :                           1 - |
+ UARTCR_180 :                     4 - |  UART_180 :                       1 - |
+ UART_PIC :                       0 - | *UART_RX :                        8 - |
+ UART_TX :                        6 - | *VERSION :                     142F - |
+
+     57 symbols
+     28 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File boot2.asm - Page 3 - 9/7/2023 10:48:23
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.03 seconds assembly time
+
+    157 lines source file
+      2 passes
+      0 errors
+      0 warnings

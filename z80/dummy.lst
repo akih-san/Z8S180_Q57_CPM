@@ -1,0 +1,81 @@
+ AS V1.42 Beta [Bld 227] - Source File dummy.z80 - Page 1 - 8/28/2023 13:7:55
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu z80
+       3/       0 :                     ;
+       4/       0 :                     ;	SuperMEZ80 CP/M dummy loop
+       5/       0 :                     ;
+       6/       0 :                     ;	Copyright (C) 2023 by Hanyazou
+       7/       0 :                     ;
+       8/       0 :                     ; Permission is hereby granted, free of charge, to any person
+       9/       0 :                     ; obtaining a copy of this software and associated documentation
+      10/       0 :                     ; files (the "Software"), to deal in the Software without
+      11/       0 :                     ; restriction, including without limitation the rights to use,
+      12/       0 :                     ; copy, modify, merge, publish, distribute, sublicense, and/or sell
+      13/       0 :                     ; copies of the Software, and to permit persons to whom the
+      14/       0 :                     ; Software is furnished to do so, subject to the following
+      15/       0 :                     ; conditions:
+      16/       0 :                     ;
+      17/       0 :                     ; The above copyright notice and this permission notice shall be
+      18/       0 :                     ; included in all copies or substantial portions of the Software.
+      19/       0 :                     ;
+      20/       0 :                     ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      21/       0 :                     ; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+      22/       0 :                     ; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      23/       0 :                     ; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      24/       0 :                     ; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      25/       0 :                     ; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+      26/       0 :                     ; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+      27/       0 :                     ; OTHER DEALINGS IN THE SOFTWARE.
+      28/       0 :                     
+      29/       0 :                     ;
+      30/       0 :                     ;	I/O ports
+      31/       0 :                     ;
+      32/       0 : =0ADH                TGTINV_TRAP	EQU	173	; return from target CPU invocation
+      33/       0 :                     
+      34/       0 :                     	ORG	0000h
+      35/       0 :                     ENTRY:
+      36/       0 : 3E 00               	LD A,0
+      37/       2 : D3 AD               	OUT (TGTINV_TRAP),A
+      38/       4 : 76                  	HALT
+      39/       5 : 18 F9                       JR ENTRY
+      40/       7 :                     
+ AS V1.42 Beta [Bld 227] - Source File dummy.z80 - Page 2 - 8/28/2023 13:7:55
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+*CASESENSITIVE :                  0 - | *COMPMODE :                       0 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                 "8/28/2023" - |
+ ENTRY :                          0 C | *FALSE :                          0 - |
+*FULLPMMU :                       1 - | *HAS64 :                          0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INSUPMODE :                      0 - | *LISTON :                         1 - |
+*MACEXP :                         7 - | *MOMCPU :                        80 - |
+*MOMCPUNAME :                 "Z80" - | *NESTMAX :                      100 - |
+*PADDING :                        1 - | *RELAXED :                        0 - |
+ TGTINV_TRAP :                  0AD - | *TIME :                   "13:7:55" - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+
+     23 symbols
+     21 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File dummy.z80 - Page 3 - 8/28/2023 13:7:55
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.03 seconds assembly time
+
+     40 lines source file
+      1 pass
+      0 errors
+      0 warnings

@@ -1,0 +1,241 @@
+ AS V1.42 Beta [Bld 227] - Source File trampoline.z80 - Page 1 - 8/28/2023 13:18:19
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu z80
+       3/       0 :                     ;
+       4/       0 :                     ;	SuperMEZ80-CPM Trampoline at the zero page
+       5/       0 :                     ;
+       6/       0 :                     ;	Copyright (C) 2023 by Hanyazou
+       7/       0 :                     ;
+       8/       0 :                     ; Permission is hereby granted, free of charge, to any person
+       9/       0 :                     ; obtaining a copy of this software and associated documentation
+      10/       0 :                     ; files (the "Software"), to deal in the Software without
+      11/       0 :                     ; restriction, including without limitation the rights to use,
+      12/       0 :                     ; copy, modify, merge, publish, distribute, sublicense, and/or sell
+      13/       0 :                     ; copies of the Software, and to permit persons to whom the
+      14/       0 :                     ; Software is furnished to do so, subject to the following
+      15/       0 :                     ; conditions:
+      16/       0 :                     ;
+      17/       0 :                     ; The above copyright notice and this permission notice shall be
+      18/       0 :                     ; included in all copies or substantial portions of the Software.
+      19/       0 :                     ;
+      20/       0 :                     ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      21/       0 :                     ; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+      22/       0 :                     ; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      23/       0 :                     ; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      24/       0 :                     ; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      25/       0 :                     ; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+      26/       0 :                     ; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+      27/       0 :                     ; OTHER DEALINGS IN THE SOFTWARE.
+      28/       0 :                     
+      29/       0 :                     ;
+      30/       0 :                     ;	I/O ports
+      31/       0 :                     ;
+      32/       0 : =1H                  CONDAT		EQU	1	; console output port
+      33/       0 : =0AAH                MON_CLEANUP	EQU	170	; clean up monitor mode
+      34/       0 : =0ABH                MON_PREPARE	EQU	171	; prepare monitor mode
+      35/       0 : =0ACH                MON_ENTER	EQU	172	; clean up monitor mode
+      36/       0 :                     
+      37/       0 :                     ;
+      38/       0 :                     ;	start of zero page
+      39/       0 :                     ;
+      40/       0 :                     ;	Note: The condition bits are not affected by OUT, NOP, JP and JR instructions
+      41/       0 :                     ;
+      42/       0 :                     	ORG	0		; reset vector
+      43/       0 :                     CLEANUP_START:
+      44/       0 :                     TGTINV_GATE:
+      45/       0 : D3 AC               	OUT (MON_ENTER),A
+      46/       2 : 18 27               	JR EXIT
+      47/       4 :                     RESTORE_SP:			; destination of the return instruction (RETI or RETN)
+      48/       4 : 31 00 00            	LD SP,0000h		; restore original SP
+      49/       7 :                     
+      50/       7 : 00                         DB	8 - $ dup(0)
+      51/       8 :                     	ORG	0008H		; RST 08H interrupt vector
+      52/       8 : =9H                  CLEANUP_IO_ADDR EQU $ + 1
+      53/       8 : D3 AB               	OUT (MON_PREPARE),A
+      54/       A : 00                  	NOP
+      55/       B :                     JUMP_INST:
+      56/       B : C3 0E 00            	JP ENTRY_RST		; Restore return address by jump instruction
+      57/       E :                     CLEANUP_END:
+      58/       E :                     
+      59/       E :                     ;
+      60/       E :                     ;	program entry
+      61/       E :                     ;
+      62/       E :                     ENTRY_RST:
+      63/       E : ED 73 AF 00         	LD	(SAVED_SP),SP
+      64/      12 : 31 AB 00            	LD	SP,INT_STACK
+      65/      15 : F5                  	PUSH	AF
+      66/      16 : AF                  	XOR	A
+      67/      17 :                     
+      68/      17 :                     ENTRY:
+      69/      17 : 32 B3 00            	LD	(NMI_FLAG),A
+      70/      1A : C5                  	PUSH	BC
+      71/      1B : D5                  	PUSH	DE
+      72/      1C : E5                  	PUSH	HL
+      73/      1D : DD E5               	PUSH	IX
+      74/      1F : FD E5               	PUSH	IY
+      75/      21 :                     
+      76/      21 : ED 7B AF 00         	LD	SP,(SAVED_SP)	; Load original SP
+      77/      25 : E1                  	POP	HL		; Save return address
+      78/      26 : 22 AD 00            	LD	(SAVED_PC),HL
+      79/      29 :                     
+      80/      29 : 18 D5               	JR	TGTINV_GATE
+      81/      2B :                     
+      82/      2B :                     EXIT:
+      83/      2B : 3A B3 00            	LD	A,(NMI_FLAG)	; Update the return instruction according to NMI_FLAG
+      84/      2E : 21 9A 00            	LD	HL,RET_INST_RST
+      85/      31 : B7                  	OR	A
+      86/      32 : 28 03               	JR	Z,SET_RET_INST
+      87/      34 : 21 9C 00            	LD	HL,RET_INST_NMI
+      88/      37 :                     SET_RET_INST:
+      89/      37 : 4E                  	LD	C,(HL)
+      90/      38 : 23                  	INC	HL
+      91/      39 : 46                  	LD	B,(HL)
+      92/      3A : ED 43 98 00         	LD	(RET_INST),BC	; Update the return instruction
+      93/      3E :                     
+      94/      3E :                     ;	setup clean up code
+      95/      3E : 2A B1 00            	LD	HL,(CLEANUP_CODE_LOCATION)
+      96/      41 : 7D                  	LD	A,L
+      97/      42 : B4                  	OR	A,H
+      98/      43 : 28 30               	JR	Z,UPDATE_CLEANUP_CODE
+      99/      45 :                     
+     100/      45 : 11 00 00            	LD	DE,CLEANUP_START
+     101/      48 : 06 0E               	LD	B,CLEANUP_END - CLEANUP_START
+     102/      4A :                     COPY_CLEANUP_CODE:
+     103/      4A : 1A                  	LD	A,(DE)
+     104/      4B : 77                  	LD	(HL),A
+     105/      4C : 23                  	INC	HL
+     106/      4D : 13                  	INC	DE
+     107/      4E : 10 FA               	DJNZ	COPY_CLEANUP_CODE
+     108/      50 :                     
+     109/      50 : 2A B1 00            	LD	HL,(CLEANUP_CODE_LOCATION)
+     110/      53 : 11 04 00            	LD	DE,RESTORE_SP
+     111/      56 : 19                  	ADD	HL,DE
+     112/      57 : 22 AB 00            	LD	(FAKE_RET_ADDR),HL
+     113/      5A : 18 19               	JR	UPDATE_CLEANUP_CODE
+     114/      5C :                     
+     115/      5C :                     ;
+     116/      5C :                     ;	NMI interrupt vector
+     117/      5C :                     ;
+     118/      5C : 00 00 00 00 00 00   	DB	0066H - $ dup(0)	; NOP
+               62 : 00 00 00 00       
+     119/      66 :                     	ORG	0066H		; NMI interrupt vector
+     120/      66 : D3 AB               	OUT	(MON_PREPARE),A	; NMI trap
+     121/      68 : 00                  	NOP
+     122/      69 : ED 73 AF 00         	LD	(SAVED_SP),SP
+     123/      6D : 31 AB 00            	LD	SP,INT_STACK
+     124/      70 : F5                  	PUSH	AF
+     125/      71 : 3E 01               	LD	A,1
+     126/      73 : 18 A2               	JR	ENTRY
+     127/      75 :                     
+     128/      75 :                     UPDATE_CLEANUP_CODE:
+     129/      75 : DD 2A B1 00         	LD	IX,(CLEANUP_CODE_LOCATION)
+     130/      79 : 3E AA               	LD	A,MON_CLEANUP
+     131/      7B : DD 77 09            	LD	(IX+CLEANUP_IO_ADDR),A
+     132/      7E : 2A AF 00            	LD	HL,(SAVED_SP)	; Set the origial SP
+     133/      81 : DD 75 05            	LD	(IX+RESTORE_SP+1),L
+     134/      84 : DD 74 06            	LD	(IX+RESTORE_SP+2),H
+     135/      87 : 3A 9E 00            	LD	A,(RET_INST_NORMAL)
+     136/      8A : DD 77 0B            	LD	(IX+JUMP_INST),A
+     137/      8D : 31 9F 00            	LD	SP,SAVED_IY
+     138/      90 : FD E1               	POP	IY
+     139/      92 : DD E1               	POP	IX
+     140/      94 : E1                  	POP	HL
+     141/      95 : D1                  	POP	DE
+     142/      96 : C1                  	POP	BC
+     143/      97 : F1                  	POP	AF
+     144/      98 :                     RET_INST:
+     145/      98 : ED 45               	RETN			; return to RESTORE_SP because SP is pointing to FAKE_RET_ADDR
+     146/      9A :                     
+     147/      9A :                     RET_INST_RST:
+     148/      9A : ED 4D               	RETI
+     149/      9C :                     RET_INST_NMI:
+     150/      9C : ED 45               	RETN
+     151/      9E :                     RET_INST_NORMAL:
+     152/      9E : C9                  	RET
+     153/      9F :                     
+     154/      9F :                     ;
+     155/      9F :                     ;	work area
+     156/      9F :                     ;	the structure of this area must be identical to struct trampoline_work_s in monitor.c
+     157/      9F :                     SAVED_IY:
+     158/      9F : 00 00               	DW	0
+     159/      A1 :                     SAVED_IX:
+     160/      A1 : 00 00               	DW	0
+     161/      A3 :                     SAVED_HL:
+     162/      A3 : 00 00               	DW	0
+     163/      A5 :                     SAVED_DE:
+     164/      A5 : 00 00               	DW	0
+     165/      A7 :                     SAVED_BC:
+     166/      A7 : 00 00               	DW	0
+     167/      A9 :                     SAVED_AF:
+     168/      A9 : 00 00               	DW	0
+     169/      AB :                     INT_STACK:
+     170/      AB :                     FAKE_RET_ADDR:
+     171/      AB : 04 00               	DW	RESTORE_SP
+     172/      AD :                     SAVED_PC:
+     173/      AD : 00 00               	DW	0
+     174/      AF :                     SAVED_SP:
+     175/      AF : 00 00               	DW	0
+     176/      B1 :                     CLEANUP_CODE_LOCATION:
+     177/      B1 : 00 00               	DW	0
+     178/      B3 :                     NMI_FLAG:
+     179/      B3 : 00                  	DB	0
+     180/      B4 :                     WORK_RFU:
+     181/      B4 : 00                  	DB	0
+     182/      B5 :                     
+     183/      B5 :                     	END
+ AS V1.42 Beta [Bld 227] - Source File trampoline.z80 - Page 2 - 8/28/2023 13:18:19
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+*CASESENSITIVE :                  0 - |  CLEANUP_CODE_LOCATION :        0B1 C |
+ CLEANUP_END :                   0E C |  CLEANUP_IO_ADDR :                9 - |
+ CLEANUP_START :                  0 C | *COMPMODE :                       0 - |
+*CONDAT :                         1 - | *CONSTPI :        3.141592653589793 - |
+ COPY_CLEANUP_CODE :             4A C | *DATE :                 "8/28/2023" - |
+ ENTRY :                         17 C |  ENTRY_RST :                     0E C |
+ EXIT :                          2B C |  FAKE_RET_ADDR :                0AB C |
+*FALSE :                          0 - | *FULLPMMU :                       1 - |
+*HAS64 :                          0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - | *INSUPMODE :                      0 - |
+ INT_STACK :                    0AB C |  JUMP_INST :                     0B C |
+*LISTON :                         1 - | *MACEXP :                         7 - |
+*MOMCPU :                        80 - | *MOMCPUNAME :                 "Z80" - |
+ MON_CLEANUP :                  0AA - |  MON_ENTER :                    0AC - |
+ MON_PREPARE :                  0AB - | *NESTMAX :                      100 - |
+ NMI_FLAG :                     0B3 C | *PADDING :                        1 - |
+*RELAXED :                        0 - |  RESTORE_SP :                     4 C |
+ RET_INST :                      98 C |  RET_INST_NMI :                  9C C |
+ RET_INST_NORMAL :               9E C |  RET_INST_RST :                  9A C |
+*SAVED_AF :                     0A9 C | *SAVED_BC :                     0A7 C |
+*SAVED_DE :                     0A5 C | *SAVED_HL :                     0A3 C |
+*SAVED_IX :                     0A1 C |  SAVED_IY :                      9F C |
+ SAVED_PC :                     0AD C |  SAVED_SP :                     0AF C |
+ SET_RET_INST :                  37 C |  TGTINV_GATE :                    0 C |
+*TIME :                  "13:18:19" - | *TRUE :                           1 - |
+ UPDATE_CLEANUP_CODE :           75 C | *VERSION :                     142F - |
+*WORK_RFU :                     0B4 C |
+
+     54 symbols
+     28 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File trampoline.z80 - Page 3 - 8/28/2023 13:18:19
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.03 seconds assembly time
+
+    184 lines source file
+      2 passes
+      0 errors
+      0 warnings

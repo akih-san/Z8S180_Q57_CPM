@@ -1,0 +1,167 @@
+ AS V1.42 Beta [Bld 227] - Source File mmu_exercise.z80 - Page 1 - 8/28/2023 13:14:40
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu z80
+       3/       0 :                     ;	SuperMEZ80-SPI MMU exercise
+       4/       0 :                     ;
+       5/       0 :                     ;	Copyright (C) 2023 by Hanyazou
+       6/       0 :                     ;
+       7/       0 :                     ;Permission is hereby granted, free of charge, to any person
+       8/       0 :                     ;obtaining a copy of this software and associated documentation
+       9/       0 :                     ;files (the "Software"), to deal in the Software without
+      10/       0 :                     ;restriction, including without limitation the rights to use,
+      11/       0 :                     ;copy, modify, merge, publish, distribute, sublicense, and/or sell
+      12/       0 :                     ;copies of the Software, and to permit persons to whom the
+      13/       0 :                     ;Software is furnished to do so, subject to the following
+      14/       0 :                     ;conditions:
+      15/       0 :                     ;
+      16/       0 :                     ;The above copyright notice and this permission notice shall be
+      17/       0 :                     ;included in all copies or substantial portions of the Software.
+      18/       0 :                     ;
+      19/       0 :                     ;THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      20/       0 :                     ;EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+      21/       0 :                     ;OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      22/       0 :                     ;NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      23/       0 :                     ;HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      24/       0 :                     ;WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+      25/       0 :                     ;FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+      26/       0 :                     ;OTHER DEALINGS IN THE SOFTWARE.
+      27/       0 :                     ;
+      28/       0 :                     	ORG	0		;mem base of boot
+      29/       0 :                     ;
+      30/       0 :                     ;	I/O ports
+      31/       0 :                     ;
+      32/       0 : =1H                  CONDAT	EQU	1		;console data port
+      33/       0 : =0AH                 DRIVE   EQU	10		;fdc-port: # of drive
+      34/       0 : =0BH                 TRACK   EQU	11		;fdc-port: # of track
+      35/       0 : =0CH                 SECTOR  EQU	12		;fdc-port: # of sector
+      36/       0 : =0DH                 FDCOP   EQU	13		;fdc-port: command
+      37/       0 : =0EH                 FDCST   EQU	14		;fdc-port: status
+      38/       0 : =0FH                 DMAL    EQU	15		;dma-port: dma address low
+      39/       0 : =10H                 DMAH    EQU	16		;dma-port: dma address high
+      40/       0 : =14H                 MMUINIT	EQU	20		;MMU INIT
+      41/       0 : =15H                 BNKSEL	EQU	21		;MMU bank select
+      42/       0 :                     ;
+      43/       0 :                     BOOT:
+      44/       0 : C3 96 00            	JP	COLD
+      45/       3 : 00 00 00 00 00 00           DB	128 - 3 dup(0)
+                9 : 00 00 00 00 00 00 
+                F : 00 00 00 00 00 00 
+               15 : 00 00 00 00 00 00 
+               1B : 00 00 00 00 00 00 
+               21 : 00 00 00 00 00 00 
+               27 : 00 00 00 00 00 00 
+               2D : 00 00 00 00 00 00 
+               33 : 00 00 00 00 00 00 
+               39 : 00 00 00 00 00 00 
+               3F : 00 00 00 00 00 00 
+               45 : 00 00 00 00 00 00 
+               4B : 00 00 00 00 00 00 
+               51 : 00 00 00 00 00 00 
+               57 : 00 00 00 00 00 00 
+               5D : 00 00 00 00 00 00 
+               63 : 00 00 00 00 00 00 
+               69 : 00 00 00 00 00 00 
+               6F : 00 00 00 00 00 00 
+               75 : 00 00 00 00 00 00 
+               7B : 00 00 00 00 00    
+      46/      80 :                     ;
+      47/      80 : 48 65 6C 6C 6F 2C   HLOMSG:	DB	"Hello, bank memory!"
+               86 : 20 62 61 6E 6B 20 
+               8C : 6D 65 6D 6F 72 79 
+               92 : 21                
+      48/      93 : 0D 0A 00            	DB	13,10,0
+      49/      96 :                     ;
+      50/      96 :                     COLD:
+      51/      96 : 21 80 00            	LD	HL,HLOMSG
+      52/      99 :                     PRTMSG0:
+      53/      99 : 7E                  	LD	A,(HL)
+      54/      9A : D3 01               	OUT	(CONDAT),A
+      55/      9C : 23                  	INC	HL
+      56/      9D : B7                  	OR	A
+      57/      9E : C2 99 00            	JP	NZ,PRTMSG0
+      58/      A1 :                     
+      59/      A1 : 3E 08               	LD	A,8
+      60/      A3 : D3 14               	OUT	(MMUINIT),A
+      61/      A5 :                     
+      62/      A5 : 0E 16               	LD	C,TESTEND - TESTSTART
+      63/      A7 : 21 B7 00                    LD	HL,TESTSTART
+      64/      AA : 11 00 C0                    LD	DE,0C000H
+      65/      AD :                     
+      66/      AD :                     COPYLOOP:
+      67/      AD : 7E                          LD	A,(HL)
+      68/      AE : 12                          LD	(DE),A
+      69/      AF : 23                          INC	HL
+      70/      B0 : 13                          INC	DE
+      71/      B1 : 0D                          DEC	C
+      72/      B2 : 20 F9                       JR	NZ,COPYLOOP
+      73/      B4 : C3 00 C0                    JP	0C000H
+      74/      B7 :                     
+      75/      B7 :                     TESTSTART:
+      76/      B7 : 21 00 01                    LD	HL,0100H
+      77/      BA : 0E 09               	LD	C,9
+      78/      BC : 06 00               	LD	B,0
+      79/      BE :                     TESTLOOP:
+      80/      BE : 78                  	LD	A,B
+      81/      BF : D3 15               	OUT	(BNKSEL),A
+      82/      C1 : 77                          LD	(HL),A
+      83/      C2 : 23                          INC	HL
+      84/      C3 : 3E 23               	LD	A,'#'
+      85/      C5 : 77                          LD	(HL),A
+      86/      C6 : 04                          INC	B
+      87/      C7 : 0D                          DEC	C
+      88/      C8 : 20 F4                       JR	NZ,TESTLOOP
+      89/      CA :                     INFLOOP:
+      90/      CA : 00                  	NOP
+      91/      CB : 18 FD               	JR	INFLOOP
+      92/      CD :                     TESTEND:
+      93/      CD :                     ;
+      94/      CD :                     	END
+ AS V1.42 Beta [Bld 227] - Source File mmu_exercise.z80 - Page 2 - 8/28/2023 13:14:40
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BNKSEL :                        15 - | *BOOT :                           0 C |
+*CASESENSITIVE :                  0 - |  COLD :                          96 C |
+*COMPMODE :                       0 - |  CONDAT :                         1 - |
+*CONSTPI :        3.141592653589793 - |  COPYLOOP :                     0AD C |
+*DATE :                 "8/28/2023" - | *DMAH :                          10 - |
+*DMAL :                          0F - | *DRIVE :                         0A - |
+*FALSE :                          0 - | *FDCOP :                         0D - |
+*FDCST :                         0E - | *FULLPMMU :                       1 - |
+*HAS64 :                          0 - | *HASFPU :                         0 - |
+*HASPMMU :                        0 - |  HLOMSG :                        80 C |
+ INFLOOP :                      0CA C | *INSUPMODE :                      0 - |
+*LISTON :                         1 - | *MACEXP :                         7 - |
+ MMUINIT :                       14 - | *MOMCPU :                        80 - |
+*MOMCPUNAME :                 "Z80" - | *NESTMAX :                      100 - |
+*PADDING :                        1 - |  PRTMSG0 :                       99 C |
+*RELAXED :                        0 - | *SECTOR :                        0C - |
+ TESTEND :                      0CD C |  TESTLOOP :                     0BE C |
+ TESTSTART :                    0B7 C | *TIME :                  "13:14:40" - |
+*TRACK :                         0B - | *TRUE :                           1 - |
+*VERSION :                     142F - |
+
+     40 symbols
+     29 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File mmu_exercise.z80 - Page 3 - 8/28/2023 13:14:40
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.06 seconds assembly time
+
+     95 lines source file
+      2 passes
+      0 errors
+      0 warnings

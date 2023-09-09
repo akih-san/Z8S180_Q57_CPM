@@ -1,0 +1,112 @@
+ AS V1.42 Beta [Bld 227] - Source File dma_helper.z80 - Page 1 - 8/28/2023 13:2:37
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu z80
+       3/       0 :                     ;
+       4/       0 :                     ;	SuperMEZ80 CP/M DMA helper
+       5/       0 :                     ;
+       6/       0 :                     ;	Copyright (C) 2023 by Hanyazou
+       7/       0 :                     ;
+       8/       0 :                     ; Permission is hereby granted, free of charge, to any person
+       9/       0 :                     ; obtaining a copy of this software and associated documentation
+      10/       0 :                     ; files (the "Software"), to deal in the Software without
+      11/       0 :                     ; restriction, including without limitation the rights to use,
+      12/       0 :                     ; copy, modify, merge, publish, distribute, sublicense, and/or sell
+      13/       0 :                     ; copies of the Software, and to permit persons to whom the
+      14/       0 :                     ; Software is furnished to do so, subject to the following
+      15/       0 :                     ; conditions:
+      16/       0 :                     ;
+      17/       0 :                     ; The above copyright notice and this permission notice shall be
+      18/       0 :                     ; included in all copies or substantial portions of the Software.
+      19/       0 :                     ;
+      20/       0 :                     ; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+      21/       0 :                     ; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+      22/       0 :                     ; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+      23/       0 :                     ; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      24/       0 :                     ; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+      25/       0 :                     ; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+      26/       0 :                     ; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+      27/       0 :                     ; OTHER DEALINGS IN THE SOFTWARE.
+      28/       0 :                     
+      29/       0 :                     ;
+      30/       0 :                     ;	I/O ports
+      31/       0 :                     ;
+      32/       0 : =1H                  CONDAT		EQU	1	; console output port
+      33/       0 : =0ADH                TGTINV_TRAP	EQU	173	; return from target CPU invocation
+      34/       0 :                     
+      35/       0 :                     	ORG	0000h
+      36/       0 :                     TGTINV_GATE:
+      37/       0 : D3 AD               	OUT (TGTINV_TRAP),A
+      38/       2 : 18 05                       JR ENTRY
+      39/       4 :                     
+      40/       4 :                     	ORG	0004h
+      41/       4 :                     PARAMS:
+      42/       4 :                     SRC_ADDR:
+      43/       4 : 00 00               	DW	0000h		; source address
+      44/       6 :                     DEST_ADDR:
+      45/       6 : 00 00               	DW	0000h		; destination address
+      46/       8 :                     LENGTH:
+      47/       8 : 00                  	DB	00h		; number of bytes to copy
+      48/       9 :                     
+      49/       9 :                     ;
+      50/       9 :                     ;	DMA helper entry
+      51/       9 :                     ;
+      52/       9 :                     ENTRY:
+      53/       9 : 2A 04 00            	LD	HL,(SRC_ADDR)
+      54/       C : ED 5B 06 00         	LD	DE,(DEST_ADDR)
+      55/      10 : 3A 08 00            	LD	A,(LENGTH)
+      56/      13 : 47                  	LD	B,A
+      57/      14 :                     LOOP:
+      58/      14 : 7E                  	LD	A,(HL)
+      59/      15 : 12                  	LD	(DE),A
+      60/      16 : 23                  	INC	HL
+      61/      17 : 13                  	INC	DE
+      62/      18 : 10 FA               	DJNZ	LOOP
+      63/      1A :                     
+      64/      1A : 3E 00               	LD	A,0		; return value
+      65/      1C : 18 E2               	JR	TGTINV_GATE
+      66/      1E :                     ;
+      67/      1E :                     	END
+ AS V1.42 Beta [Bld 227] - Source File dma_helper.z80 - Page 2 - 8/28/2023 13:2:37
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+*CASESENSITIVE :                  0 - | *COMPMODE :                       0 - |
+*CONDAT :                         1 - | *CONSTPI :        3.141592653589793 - |
+*DATE :                 "8/28/2023" - |  DEST_ADDR :                      6 C |
+ ENTRY :                          9 C | *FALSE :                          0 - |
+*FULLPMMU :                       1 - | *HAS64 :                          0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INSUPMODE :                      0 - |  LENGTH :                         8 C |
+*LISTON :                         1 - |  LOOP :                          14 C |
+*MACEXP :                         7 - | *MOMCPU :                        80 - |
+*MOMCPUNAME :                 "Z80" - | *NESTMAX :                      100 - |
+*PADDING :                        1 - | *PARAMS :                         4 C |
+*RELAXED :                        0 - |  SRC_ADDR :                       4 C |
+ TGTINV_GATE :                    0 C |  TGTINV_TRAP :                  0AD - |
+*TIME :                   "13:2:37" - | *TRUE :                           1 - |
+*VERSION :                     142F - |
+
+     30 symbols
+     23 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File dma_helper.z80 - Page 3 - 8/28/2023 13:2:37
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.11 seconds assembly time
+
+     68 lines source file
+      2 passes
+      0 errors
+      0 warnings
