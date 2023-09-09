@@ -5,7 +5,7 @@ Z8S180-57Qは、＠Gazelle8087さんによって開発され、Z8S180が動作�
 そのSBC上で動くCP/M-80 Ver2.2を公開いたします。<br>
 <br>
 ![Z8S180_57Q1](P1020312.JPG)<br>
-![Z8S180_57Q2](P1020317.JPG.jpg)<br>
+![Z8S180_57Q2](P1020317.JPG)<br>
 <br>
 このCP/Mのオリジナルは、@hanyazouさんが作成し、@S_Okueさんが作成したSuperMEZ80<br>
 上で動いていました。その後、@hanyazouさんは独自のメザニンボードを開発しておられ、<br>
