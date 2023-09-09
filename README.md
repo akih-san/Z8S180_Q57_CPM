@@ -13,7 +13,7 @@ CP/M-80 Ver3.0も移植されておられます。<br>
 <br>
 今回公開するのは、@hanyazouさんのCP/M-80 Ver2.2をZ8S180-57Qへ移植したものです。<br>
 ソースのコンパイルは、マイクロチップ社の「MPLAB® X Integrated Development Environment (IDE)」<br>
-で行っております。（MPLAB X IDE v6.10）コンパイラは、XC8を使用しています。<br>
+で行っております。（MPLAB X IDE v6.10）コンパイラは、XC8を使用しています。
 https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide<br>
 <br>
 Z80のアセンブラは、Macro Assembler AS V1.42を使用しています。<br>
