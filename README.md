@@ -24,7 +24,6 @@ FatFsはR0.15を使用しています。<br>
 http://elm-chan.org/fsw/ff/00index_e.html<br>
 <br>
 SDカード上のCP/Mイメージファイルの作成は、CpmtoolsGUIを利用しています。<br>
-<br>
 ＜CpmtoolsGUI - neko Java Home Page＞<br>
 http://star.gmobb.jp/koji/cgi/wiki.cgi?page=CpmtoolsGUI<br>
 <br>
