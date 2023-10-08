@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 1 - 9/7/2023 11:48:43
+ AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 1 - 10/8/2023 13:24:38
 
 
        1/       0 :                     	page 0
@@ -88,23 +88,23 @@
       85/    FA33 :                     ;	disk parameter header for disk 00
       86/    FA33 : 73 FA 00 00         DPBASE:	DW	TRANS,0000H
       87/    FA37 : 00 00 00 00         	DW	0000H,0000H
-      88/    FA3B : 52 FC 8D FA         	DW	DIRBF,DPBLK
-      89/    FA3F : 4C FF D2 FC         	DW	CHK00,ALL00
+      88/    FA3B : 54 FC 8D FA         	DW	DIRBF,DPBLK
+      89/    FA3F : 4E FF D4 FC         	DW	CHK00,ALL00
       90/    FA43 :                     ;	disk parameter header for disk 01
       91/    FA43 : 73 FA 00 00         	DW	TRANS,0000H
       92/    FA47 : 00 00 00 00         	DW	0000H,0000H
-      93/    FA4B : 52 FC 8D FA         	DW	DIRBF,DPBLK
-      94/    FA4F : 5C FF F1 FC         	DW	CHK01,ALL01
+      93/    FA4B : 54 FC 8D FA         	DW	DIRBF,DPBLK
+      94/    FA4F : 5E FF F3 FC         	DW	CHK01,ALL01
       95/    FA53 :                     ;	disk parameter header for disk 02
       96/    FA53 : 73 FA 00 00         	DW	TRANS,0000H
       97/    FA57 : 00 00 00 00         	DW	0000H,0000H
-      98/    FA5B : 52 FC 8D FA         	DW	DIRBF,DPBLK
-      99/    FA5F : 6C FF 10 FD         	DW	CHK02,ALL02
+      98/    FA5B : 54 FC 8D FA         	DW	DIRBF,DPBLK
+      99/    FA5F : 6E FF 12 FD         	DW	CHK02,ALL02
      100/    FA63 :                     ;	disk parameter header for disk 03
      101/    FA63 : 73 FA 00 00         	DW	TRANS,0000H
      102/    FA67 : 00 00 00 00         	DW	0000H,0000H
-     103/    FA6B : 52 FC 8D FA         	DW	DIRBF,DPBLK
-     104/    FA6F : 7C FF 2F FD         	DW	CHK03,ALL03
+     103/    FA6B : 54 FC 8D FA         	DW	DIRBF,DPBLK
+     104/    FA6F : 7E FF 31 FD         	DW	CHK03,ALL03
      105/    FA73 :                     ;
      106/    FA73 :                     ;	sector translate vector for the IBM 8" SD disks
      107/    FA73 :                     ;
@@ -134,12 +134,12 @@
      131/    FA9C :                     ;	disk parameter header
      132/    FA9C : 00 00 00 00         HDB1:	DW	0000H,0000H
      133/    FAA0 : 00 00 00 00         	DW	0000H,0000H
-     134/    FAA4 : 52 FC BC FA         	DW	DIRBF,HDBLK
-     135/    FAA8 : 8C FF 4E FD         	DW	CHKHD1,ALLHD1
+     134/    FAA4 : 54 FC BC FA         	DW	DIRBF,HDBLK
+     135/    FAA8 : 8E FF 50 FD         	DW	CHKHD1,ALLHD1
      136/    FAAC : 00 00 00 00         HDB2:	DW	0000H,0000H
      137/    FAB0 : 00 00 00 00         	DW	0000H,0000H
-     138/    FAB4 : 52 FC BC FA         	DW	DIRBF,HDBLK
-     139/    FAB8 : 8C FF 4D FE         	DW	CHKHD2,ALLHD2
+     138/    FAB4 : 54 FC BC FA         	DW	DIRBF,HDBLK
+     139/    FAB8 : 8E FF 4F FE         	DW	CHKHD2,ALLHD2
      140/    FABC :                     ;
      141/    FABC :                     ;       disk parameter block for harddisk
      142/    FABC :                     ;
@@ -415,11 +415,11 @@
      397/    FC34 :                     ;
      398/    FC34 : 79                  SETDMA: LD	A,C		;low order address
      399/    FC35 : D3 4F               	OUT	(DMAL),A
-     400/    FC37 : 21 51 FC            	LD	HL,DSTL
+     400/    FC37 : 21 53 FC            	LD	HL,DSTL
      401/    FC3A : 77                  	LD	(HL),A
      402/    FC3B : 78                  	LD	A,B		;high order address
      403/    FC3C : D3 50               	OUT	(DMAH),A	;in dma
-     404/    FC3E : 21 50 FC            	LD	HL,DSTH
+     404/    FC3E : 21 52 FC            	LD	HL,DSTH
      405/    FC41 : 77                  	LD	(HL),A
      406/    FC42 : C9                  	RET
      407/    FC43 :                     ;
@@ -471,94 +471,95 @@
      453/    FC4B : =>TRUE               	else
      454/    FC4B : 3E 01               	LD	A,D_DMA_WRITE	;write command -> A
      455/    FC4D : [451]                	endif
-     456/    FC4D :                     
-     457/    FC4D : =>FALSE              	if BYTE_RW
-     458/    FC4D :                     
-     459/    FC4D :                     	; write 128 bytes from the I/O port
-     460/    FC4D :                     	PUSH	DE
-     461/    FC4D :                     	PUSH	HL
-     462/    FC4D :                     	LD	E,128
-     463/    FC4D :                     	LD	A,(DSTH)
-     464/    FC4D :                     	LD	H,A
-     465/    FC4D :                     	LD	A,(DSTL)
-     466/    FC4D :                     	LD	L,A
-     467/    FC4D :                     LWRITE:
-     468/    FC4D :                     	LD	A,(HL)
-     469/    FC4D :                     	OUT	(FDCDAT),A
-     470/    FC4D :                     	INC	HL
-     471/    FC4D :                     	DEC	E
-     472/    FC4D :                     	JP	NZ,LWRITE
-     473/    FC4D :                     	POP	HL
-     474/    FC4D :                     	POP	DE
-     475/    FC4D :                     
-     476/    FC4D : [457]                	endif
-     477/    FC4D :                     
-     478/    FC4D : DB 4E               	IN	A,(FDCST)	;status of i/o operation -> A
-     479/    FC4F : C9                  	RET
-     480/    FC50 :                     
-     481/    FC50 :                     ;
-     482/    FC50 :                     ;	disk I/O destination address in non DMA mode
-     483/    FC50 :                     ;
-     484/    FC50 : 00                  DSTH:	DB	0		;disk I/O destination address high
-     485/    FC51 : 00                  DSTL:	DB	0		;disk I/O destination address low
-     486/    FC52 :                     ;
-     487/    FC52 :                     ;	the remainder of the CBIOS is reserved uninitialized
-     488/    FC52 :                     ;	data area, and does not need to be a part of the
-     489/    FC52 :                     ;	system memory image (the space must be available,
-     490/    FC52 :                     ;	however, between "begdat" and "enddat").
-     491/    FC52 :                     ;
-     492/    FC52 :                     ;	scratch ram area for BDOS use
-     493/    FC52 :                     ;
-     494/    FC52 : =0FC52H              BEGDAT	EQU	$		;beginning of data area
-     495/    FC52 :                     DIRBF:	DS	128		;scratch directory area
-     496/    FCD2 :                     ALL00:	DS	31		;allocation vector 0
-     497/    FCF1 :                     ALL01:	DS	31		;allocation vector 1
-     498/    FD10 :                     ALL02:	DS	31		;allocation vector 2
-     499/    FD2F :                     ALL03:	DS	31		;allocation vector 3
-     500/    FD4E :                     ALLHD1:	DS	255		;allocation vector harddisk 1
-     501/    FE4D :                     ALLHD2:	DS	255		;allocation vector harddisk 2
-     502/    FF4C :                     CHK00:	DS	16		;check vector 0
-     503/    FF5C :                     CHK01:	DS	16		;check vector 1
-     504/    FF6C :                     CHK02:	DS	16		;check vector 2
-     505/    FF7C :                     CHK03:	DS	16		;check vector 3
-     506/    FF8C :                     CHKHD1:				;check vector harddisk 1
-     507/    FF8C :                     CHKHD2:				;check vector harddisk 2
-     508/    FF8C :                     ;CHKHD1:	DEFS	0		;check vector harddisk 1
-     509/    FF8C :                     ;CHKHD2:	DEFS	0		;check vector harddisk 2
-     510/    FF8C :                     ;
-     511/    FF8C : =0FF8CH              ENDDAT	EQU	$		;end of data area
-     512/    FF8C : =33AH                DATSIZ	EQU	$-BEGDAT	;size of data area
-     513/    FF8C :                     ;
-     514/    FF8C :                     	END			;of BIOS
- AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 2 - 9/7/2023 11:48:43
+     456/    FC4D : D3 4D               	OUT	(FDCOP),A	;start i/o operation
+     457/    FC4F :                     
+     458/    FC4F : =>FALSE              	if BYTE_RW
+     459/    FC4F :                     
+     460/    FC4F :                     	; write 128 bytes from the I/O port
+     461/    FC4F :                     	PUSH	DE
+     462/    FC4F :                     	PUSH	HL
+     463/    FC4F :                     	LD	E,128
+     464/    FC4F :                     	LD	A,(DSTH)
+     465/    FC4F :                     	LD	H,A
+     466/    FC4F :                     	LD	A,(DSTL)
+     467/    FC4F :                     	LD	L,A
+     468/    FC4F :                     LWRITE:
+     469/    FC4F :                     	LD	A,(HL)
+     470/    FC4F :                     	OUT	(FDCDAT),A
+     471/    FC4F :                     	INC	HL
+     472/    FC4F :                     	DEC	E
+     473/    FC4F :                     	JP	NZ,LWRITE
+     474/    FC4F :                     	POP	HL
+     475/    FC4F :                     	POP	DE
+     476/    FC4F :                     
+     477/    FC4F : [458]                	endif
+     478/    FC4F :                     
+     479/    FC4F : DB 4E               	IN	A,(FDCST)	;status of i/o operation -> A
+     480/    FC51 : C9                  	RET
+     481/    FC52 :                     
+     482/    FC52 :                     ;
+     483/    FC52 :                     ;	disk I/O destination address in non DMA mode
+     484/    FC52 :                     ;
+     485/    FC52 : 00                  DSTH:	DB	0		;disk I/O destination address high
+     486/    FC53 : 00                  DSTL:	DB	0		;disk I/O destination address low
+     487/    FC54 :                     ;
+     488/    FC54 :                     ;	the remainder of the CBIOS is reserved uninitialized
+     489/    FC54 :                     ;	data area, and does not need to be a part of the
+     490/    FC54 :                     ;	system memory image (the space must be available,
+     491/    FC54 :                     ;	however, between "begdat" and "enddat").
+     492/    FC54 :                     ;
+     493/    FC54 :                     ;	scratch ram area for BDOS use
+     494/    FC54 :                     ;
+     495/    FC54 : =0FC54H              BEGDAT	EQU	$		;beginning of data area
+     496/    FC54 :                     DIRBF:	DS	128		;scratch directory area
+     497/    FCD4 :                     ALL00:	DS	31		;allocation vector 0
+     498/    FCF3 :                     ALL01:	DS	31		;allocation vector 1
+     499/    FD12 :                     ALL02:	DS	31		;allocation vector 2
+     500/    FD31 :                     ALL03:	DS	31		;allocation vector 3
+     501/    FD50 :                     ALLHD1:	DS	255		;allocation vector harddisk 1
+     502/    FE4F :                     ALLHD2:	DS	255		;allocation vector harddisk 2
+     503/    FF4E :                     CHK00:	DS	16		;check vector 0
+     504/    FF5E :                     CHK01:	DS	16		;check vector 1
+     505/    FF6E :                     CHK02:	DS	16		;check vector 2
+     506/    FF7E :                     CHK03:	DS	16		;check vector 3
+     507/    FF8E :                     CHKHD1:				;check vector harddisk 1
+     508/    FF8E :                     CHKHD2:				;check vector harddisk 2
+     509/    FF8E :                     ;CHKHD1:	DEFS	0		;check vector harddisk 1
+     510/    FF8E :                     ;CHKHD2:	DEFS	0		;check vector harddisk 2
+     511/    FF8E :                     ;
+     512/    FF8E : =0FF8EH              ENDDAT	EQU	$		;end of data area
+     513/    FF8E : =33AH                DATSIZ	EQU	$-BEGDAT	;size of data area
+     514/    FF8E :                     ;
+     515/    FF8E :                     	END			;of BIOS
+ AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 2 - 10/8/2023 13:24:38
 
 
   Symbol Table (* = unused):
   --------------------------
 
- ALL00 :                      0FCD2 C |  ALL01 :                      0FCF1 C |
- ALL02 :                      0FD10 C |  ALL03 :                      0FD2F C |
- ALLHD1 :                     0FD4E C |  ALLHD2 :                     0FE4D C |
+ ALL00 :                      0FCD4 C |  ALL01 :                      0FCF3 C |
+ ALL02 :                      0FD12 C |  ALL03 :                      0FD31 C |
+ ALLHD1 :                     0FD50 C |  ALLHD2 :                     0FE4F C |
 *ARCHITECTURE :                                        "i386-unknown-win32" - |
  AUXDAT :                         5 - |  BDOS :                       0EC06 - |
- BEGDAT :                     0FC52 - |  BIAS :                       0B000 - |
+ BEGDAT :                     0FC54 - |  BIAS :                       0B000 - |
  BIOS :                       0FA00 - |  BOOT :                       0FB3E C |
  BYTE_RW :                        0 - | *CASESENSITIVE :                  0 - |
  CCP :                        0E400 - |  CDISK :                          4 - |
- CHK00 :                      0FF4C C |  CHK01 :                      0FF5C C |
- CHK02 :                      0FF6C C |  CHK03 :                      0FF7C C |
- CHKHD1 :                     0FF8C C |  CHKHD2 :                     0FF8C C |
+ CHK00 :                      0FF4E C |  CHK01 :                      0FF5E C |
+ CHK02 :                      0FF6E C |  CHK03 :                      0FF7E C |
+ CHKHD1 :                     0FF8E C |  CHKHD2 :                     0FF8E C |
 *COMPMODE :                       0 - |  CONIN :                      0FBC5 C |
  CONOUT :                     0FBD0 C |  CONST :                      0FBBC C |
-*CONSTPI :        3.141592653589793 - | *DATE :                  "9/7/2023" - |
-*DATSIZ :                       33A - |  DIRBF :                      0FC52 C |
+*CONSTPI :        3.141592653589793 - | *DATE :                 "10/8/2023" - |
+*DATSIZ :                       33A - |  DIRBF :                      0FC54 C |
  DMAH :                          50 - |  DMAL :                          4F - |
  DPBASE :                     0FA33 C |  DPBLK :                      0FA8D C |
- DSTH :                       0FC50 C |  DSTL :                       0FC51 C |
+ DSTH :                       0FC52 C |  DSTL :                       0FC53 C |
  D_DMA_READ :                     0 - |  D_DMA_WRITE :                    1 - |
 *D_ERROR :                        1 - | *D_READ :                         2 - |
 *D_SUCCESS :                      0 - | *D_WRITE :                        3 - |
-*ENDDAT :                     0FF8C - | *FALSE :                          0 - |
+*ENDDAT :                     0FF8E - | *FALSE :                          0 - |
  FDCD :                          4A - | *FDCDAT :                        48 - |
  FDCOP :                         4D - |  FDCS :                          4C - |
  FDCST :                         4E - |  FDCT :                          4B - |
@@ -583,7 +584,7 @@
  SELHD :                      0FC18 C |  SELHD1 :                     0FC0F C |
  SELHD2 :                     0FC15 C |  SETDMA :                     0FC34 C |
  SETSEC :                     0FC1F C |  SETTRK :                     0FC1B C |
- SIGNON :                     0FACB C | *TIME :                  "11:48:43" - |
+ SIGNON :                     0FACB C | *TIME :                  "13:24:38" - |
  TRANS :                      0FA73 C | *TRUE :                           1 - |
  UARTCR_180 :                     4 - |  UART_180 :                       1 - |
  UART_PIC :                       0 - |  UART_RX :                        8 - |
@@ -594,7 +595,7 @@
     106 symbols
      28 unused symbols
 
- AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 3 - 9/7/2023 11:48:43
+ AS V1.42 Beta [Bld 227] - Source File bios2.asm - Page 3 - 10/8/2023 13:24:38
 
 
   Code Pages:
@@ -604,9 +605,9 @@ STANDARD (0 changed characters)
 
 1 code page
 
-0.03 seconds assembly time
+0.17 seconds assembly time
 
-    515 lines source file
+    516 lines source file
       2 passes
       0 errors
       0 warnings
